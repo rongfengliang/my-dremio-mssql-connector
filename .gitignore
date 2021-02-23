@@ -1,3 +1,4 @@
 .idea
 my-mssql.iml
 target
+.DS_Store
