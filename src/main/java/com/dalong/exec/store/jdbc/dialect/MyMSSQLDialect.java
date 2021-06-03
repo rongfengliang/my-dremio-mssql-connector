@@ -11,14 +11,6 @@ import com.dremio.exec.store.jdbc.rel2sql.MSSQLRelToSqlConverter;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.UnmodifiableIterator;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.text.MessageFormat;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TimeZone;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.Window;
@@ -26,27 +18,18 @@ import org.apache.calcite.rel.core.Window.Group;
 import org.apache.calcite.rel.core.Window.RexWinAggCall;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexOver;
-import org.apache.calcite.sql.SqlAbstractDateTimeLiteral;
-import org.apache.calcite.sql.SqlAggFunction;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlCollation;
-import org.apache.calcite.sql.SqlDataTypeSpec;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlKind;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.SqlSelectKeyword;
-import org.apache.calcite.sql.SqlSelectOperator;
-import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.*;
 import org.apache.calcite.sql.SqlCollation.Coercibility;
 import org.apache.calcite.sql.dialect.MssqlSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.DatabaseMetaData;
+import java.sql.SQLException;
+import java.text.MessageFormat;
+import java.util.*;
 
 public class MyMSSQLDialect extends ArpDialect {
     public static final Set<SqlAggFunction> SUPPORTED_WINDOW_AGG_CALLS;
@@ -61,8 +44,8 @@ public class MyMSSQLDialect extends ArpDialect {
             private static final long serialVersionUID = 1L;
 
             public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-                writer.keyword("COLLATE");
-                writer.keyword("Latin1_General_BIN2");
+//                writer.keyword("COLLATE");
+//                writer.keyword("Latin1_General_BIN2");
             }
         };
     }
@@ -158,7 +141,7 @@ public class MyMSSQLDialect extends ArpDialect {
         return new MSSQLRelToSqlConverter(this);
     }
 
-    public ArpDialect.ArpSchemaFetcher newSchemaFetcher(JdbcPluginConfig config) {
+    public ArpSchemaFetcher newSchemaFetcher(JdbcPluginConfig config) {
         return new MyMSSQLDialect.MSSQLSchemaFetcher(config.getHiddenSchemas(), config);
     }
 
@@ -196,14 +179,13 @@ public class MyMSSQLDialect extends ArpDialect {
         if (DISABLE_PUSH_COLLATION) {
             return null;
         } else {
-//            switch(kind) {
-//                case LITERAL:
-//                case IDENTIFIER:
-//                    return this.MSSQL_BINARY_COLLATION;
-//                default:
-//                    return null;
-//            }
-            return  null;
+            switch(kind) {
+                case LITERAL:
+                case IDENTIFIER:
+                    return this.MSSQL_BINARY_COLLATION;
+                default:
+                    return null;
+            }
         }
     }
 
@@ -212,7 +194,7 @@ public class MyMSSQLDialect extends ArpDialect {
         DISABLE_PUSH_COLLATION = Boolean.getBoolean("dremio.jdbc.mssql.push-collation.disable");
     }
 
-    private static final class MSSQLSchemaFetcher extends ArpDialect.ArpSchemaFetcher {
+    private static final class MSSQLSchemaFetcher extends ArpSchemaFetcher {
         private static final Logger logger = LoggerFactory.getLogger(MyMSSQLDialect.MSSQLSchemaFetcher.class);
 
         private MSSQLSchemaFetcher(Set<String> hiddenSchemas, JdbcPluginConfig config) {
@@ -234,11 +216,6 @@ public class MyMSSQLDialect extends ArpDialect {
                 Optional<Long> fallbackEstimate = this.executeQueryAndGetFirstLong("SELECT COUNT_BIG(*) FROM " + quotedPath);
                 return (Long)fallbackEstimate.orElse(1000000000L);
             }
-        }
-
-        // $FF: synthetic method
-        MSSQLSchemaFetcher(Set x0, JdbcPluginConfig x1, Object x2) {
-            this(x0, x1);
         }
     }
 }

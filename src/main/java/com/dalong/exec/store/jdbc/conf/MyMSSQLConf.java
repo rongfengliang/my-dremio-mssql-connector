@@ -1,36 +1,32 @@
 package com.dalong.exec.store.jdbc.conf;
+
+import com.dalong.exec.store.jdbc.MyDataSources;
 import com.dalong.exec.store.jdbc.dialect.MyMSSQLDialect;
-import com.dremio.exec.catalog.conf.AuthenticationType;
-import com.dremio.exec.catalog.conf.DisplayMetadata;
-import com.dremio.exec.catalog.conf.NotMetadataImpacting;
-import com.dremio.exec.catalog.conf.Secret;
-import com.dremio.exec.catalog.conf.SourceType;
+import com.dremio.exec.catalog.conf.*;
 import com.dremio.exec.store.jdbc.CloseableDataSource;
-import com.dremio.exec.store.jdbc.DataSources;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig.Builder;
 import com.dremio.exec.store.jdbc.conf.AbstractArpConf;
-import com.dremio.exec.store.jdbc.conf.MSSQLConf;
-import com.dremio.exec.store.jdbc.dialect.MSSQLDialect;
 import com.dremio.exec.store.jdbc.dialect.arp.ArpDialect;
 import com.dremio.exec.store.jdbc.legacy.JdbcDremioSqlDialect;
-import com.dremio.exec.store.jdbc.legacy.LegacyCapableJdbcConf;
-import com.dremio.exec.store.jdbc.legacy.LegacyDialect;
-import com.dremio.exec.store.jdbc.legacy.MSSQLLegacyDialect;
 import com.dremio.options.OptionManager;
 import com.dremio.security.CredentialsService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import io.protostuff.Tag;
-import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
+import org.apache.commons.lang3.reflect.MethodUtils;
+
 import javax.sql.ConnectionPoolDataSource;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import org.apache.commons.lang3.reflect.MethodUtils;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @SourceType(
         value = "MYMSSQL",
@@ -39,7 +35,7 @@ import org.apache.commons.lang3.reflect.MethodUtils;
 )
 public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     private static final String ARP_FILENAME = "arp/implementation/my-mssql-arp.yaml";
-    private static final MyMSSQLDialect MS_ARP_DIALECT = (MyMSSQLDialect) AbstractArpConf.loadArpFile("arp/implementation/my-mssql-arp.yaml", MyMSSQLDialect::new);
+    private static final MyMSSQLDialect MS_ARP_DIALECT = (MyMSSQLDialect) AbstractArpConf.loadArpFile("arp/implementation/mssql-arp.yaml", MyMSSQLDialect::new);
     private static final String POOLED_DATASOURCE = "com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource";
     @NotBlank
     @Tag(1)
@@ -106,10 +102,30 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     public String hostnameOverride;
     @Tag(14)
     @NotMetadataImpacting
-    @DisplayMetadata(
-            label = "Grant External Query access (Warning: External Query allows users with the Can Query privilege on this source to query any table or view within the source)"
-    )
+    @JsonIgnore
     public boolean enableExternalQuery = false;
+    @Tag(15)
+    public List<Property> propertyList;
+    @Tag(16)
+    @DisplayMetadata(
+            label = "Maximum idle connections"
+    )
+    @NotMetadataImpacting
+    public int maxIdleConns = 8;
+    @Tag(17)
+    @DisplayMetadata(
+            label = "Connection idle time (s)"
+    )
+    @NotMetadataImpacting
+    public int idleTimeSec = 60;
+
+    public MyMSSQLConf() {
+    }
+
+    @Override
+    public JdbcDremioSqlDialect getDialect() {
+        return MS_ARP_DIALECT;
+    }
 
     public JdbcPluginConfig buildPluginConfig(Builder configBuilder, CredentialsService credentialsService, OptionManager optionManager) {
         return configBuilder.withDialect(this.getDialect()).withDatasourceFactory(this::newDataSource).withDatabase(this.database).withShowOnlyConnDatabase(this.showOnlyConnectionDatabase).withFetchSize(this.fetchSize).build();
@@ -128,8 +144,7 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
             if (this.password != null) {
                 MethodUtils.invokeExactMethod(source, "setPassword", new Object[]{this.password});
             }
-
-            return DataSources.newSharedDataSource(source);
+            return MyDataSources.newSharedDataSource(source, this.maxIdleConns, this.idleTimeSec);
         } catch (InvocationTargetException var4) {
             Throwable cause = var4.getCause();
             if (cause != null) {
@@ -163,26 +178,22 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
             }
         }
 
+        if (null != this.propertyList && !this.propertyList.isEmpty()) {
+            urlBuilder.append((String)this.propertyList.stream().map((p) -> {
+                return p.name + "=" + p.value;
+            }).collect(Collectors.joining(";", ";", "")));
+        }
+
         return urlBuilder.toString();
     }
 
-
     protected ArpDialect getArpDialect() {
         return MS_ARP_DIALECT;
-    }
-
-    protected boolean getLegacyFlag() {
-        return this.useLegacyDialect;
     }
 
     public static MyMSSQLConf newMessage() {
         MyMSSQLConf result = new MyMSSQLConf();
         result.useLegacyDialect = true;
         return result;
-    }
-
-    @Override
-    public JdbcDremioSqlDialect getDialect() {
-        return MS_ARP_DIALECT;
     }
 }
