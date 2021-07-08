@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dalong.jdbc</groupId>
     <artifactId>my-mssql</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>17.0.0-202107060524010627-31b5222b</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <version.dremio>15.5.0-202105040508160960-dddd4dca</version.dremio>
-        <version.dremio2>16.0.0-202105120132280783-b6a3f06a</version.dremio2>
+        <version.dremio2>17.0.0-202107060524010627-31b5222b</version.dremio2>
     </properties>
 
 
@@ -19,27 +19,11 @@
         <dependency>
             <groupId>com.dremio.community.plugins</groupId>
             <artifactId>dremio-ce-jdbc-plugin</artifactId>
-            <version>${version.dremio}</version>
+            <version>${version.dremio2}</version>
             <scope>compile</scope>
-        </dependency>
-<!--        <dependency>-->
-<!--            <groupId>com.dremio.community.plugins</groupId>-->
-<!--            <artifactId>dremio-ce-jdbc-plugin</artifactId>-->
-<!--            <version>${version.dremio2}</version>-->
-<!--            <scope>compile</scope>-->
-<!--        </dependency>-->
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>8.2.2.jre8</version>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
     <repositories>
-        <repository>
-            <id>tencent-public</id>
-            <url>http://mirrors.cloud.tencent.com/nexus/repository/maven-public/</url>
-        </repository>
         <repository>
             <id>dremio-public</id>
             <url>http://maven.dremio.com/public/</url>

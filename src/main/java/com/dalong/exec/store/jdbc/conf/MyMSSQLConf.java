@@ -1,9 +1,9 @@
 package com.dalong.exec.store.jdbc.conf;
 
-import com.dalong.exec.store.jdbc.MyDataSources;
 import com.dalong.exec.store.jdbc.dialect.MyMSSQLDialect;
 import com.dremio.exec.catalog.conf.*;
 import com.dremio.exec.store.jdbc.CloseableDataSource;
+import com.dremio.exec.store.jdbc.DataSources;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig.Builder;
 import com.dremio.exec.store.jdbc.conf.AbstractArpConf;
@@ -30,12 +30,13 @@ import java.util.stream.Collectors;
 
 @SourceType(
         value = "MYMSSQL",
+        uiConfig = "my-mssql-layout.json",
         label = "Microsoft SQL Server",
-        uiConfig = "my-mssql-layout.json"
+        externalQuerySupported = true
 )
 public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     private static final String ARP_FILENAME = "arp/implementation/my-mssql-arp.yaml";
-    private static final MyMSSQLDialect MS_ARP_DIALECT = (MyMSSQLDialect) AbstractArpConf.loadArpFile("arp/implementation/mssql-arp.yaml", MyMSSQLDialect::new);
+    private static final MyMSSQLDialect MS_ARP_DIALECT = AbstractArpConf.loadArpFile(ARP_FILENAME, MyMSSQLDialect::new);
     private static final String POOLED_DATASOURCE = "com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource";
     @NotBlank
     @Tag(1)
@@ -118,6 +119,12 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     )
     @NotMetadataImpacting
     public int idleTimeSec = 60;
+    @Tag(18)
+    @DisplayMetadata(
+            label = "Query timeout (s)"
+    )
+    @NotMetadataImpacting
+    public int queryTimeoutSec = 0;
 
     public MyMSSQLConf() {
     }
@@ -127,15 +134,16 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
         return MS_ARP_DIALECT;
     }
 
+    @Override
     public JdbcPluginConfig buildPluginConfig(Builder configBuilder, CredentialsService credentialsService, OptionManager optionManager) {
-        return configBuilder.withDialect(this.getDialect()).withDatasourceFactory(this::newDataSource).withDatabase(this.database).withShowOnlyConnDatabase(this.showOnlyConnectionDatabase).withFetchSize(this.fetchSize).build();
+        return configBuilder.withDialect(this.getDialect()).withDatasourceFactory(this::newDataSource).withDatabase(this.database).withShowOnlyConnDatabase(this.showOnlyConnectionDatabase).withFetchSize(this.fetchSize).withQueryTimeout(this.queryTimeoutSec).build();
     }
 
     private CloseableDataSource newDataSource() throws SQLException {
         String url = this.toJdbcConnectionString();
 
         try {
-            ConnectionPoolDataSource source = (ConnectionPoolDataSource)Class.forName("com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource").newInstance();
+            ConnectionPoolDataSource source = (ConnectionPoolDataSource)Class.forName(POOLED_DATASOURCE).newInstance();
             MethodUtils.invokeExactMethod(source, "setURL", new Object[]{url});
             if (this.username != null) {
                 MethodUtils.invokeExactMethod(source, "setUser", new Object[]{this.username});
@@ -144,7 +152,8 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
             if (this.password != null) {
                 MethodUtils.invokeExactMethod(source, "setPassword", new Object[]{this.password});
             }
-            return MyDataSources.newSharedDataSource(source, this.maxIdleConns, this.idleTimeSec);
+
+            return DataSources.newSharedDataSource(source, this.maxIdleConns, (long)this.idleTimeSec);
         } catch (InvocationTargetException var4) {
             Throwable cause = var4.getCause();
             if (cause != null) {
