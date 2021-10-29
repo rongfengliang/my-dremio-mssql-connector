@@ -1,5 +1,5 @@
 {
-  "sourceType": "MYMSSQL",
+  "sourceType": "MSSQL",
   "metadataRefresh": {
     "datasetDiscovery": true
   },
@@ -78,9 +78,6 @@
               },
               {
                 "propName": "config.enableExternalQuery"
-              },
-              {
-                "propName": "config.useLegacyDialect"
               }
             ]
           },

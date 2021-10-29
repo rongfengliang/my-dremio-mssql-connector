@@ -7,8 +7,6 @@ import com.dremio.exec.store.jdbc.DataSources;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig.Builder;
 import com.dremio.exec.store.jdbc.conf.AbstractArpConf;
-import com.dremio.exec.store.jdbc.dialect.arp.ArpDialect;
-import com.dremio.exec.store.jdbc.legacy.JdbcDremioSqlDialect;
 import com.dremio.options.OptionManager;
 import com.dremio.security.CredentialsService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
         externalQuerySupported = true
 )
 public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
-    private static final String ARP_FILENAME = "arp/implementation/my-mssql-arp.yaml";
+    private static final String ARP_FILENAME = "arp/implementation/mssql-arp.yaml";
     private static final MyMSSQLDialect MS_ARP_DIALECT = AbstractArpConf.loadArpFile(ARP_FILENAME, MyMSSQLDialect::new);
     private static final String POOLED_DATASOURCE = "com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource";
     @NotBlank
@@ -82,6 +80,7 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     @DisplayMetadata(
             label = "Enable legacy dialect"
     )
+    @JsonIgnore
     public boolean useLegacyDialect = false;
     @Tag(11)
     @DisplayMetadata(
@@ -126,15 +125,6 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     @NotMetadataImpacting
     public int queryTimeoutSec = 0;
 
-    public MyMSSQLConf() {
-    }
-
-    @Override
-    public JdbcDremioSqlDialect getDialect() {
-        return MS_ARP_DIALECT;
-    }
-
-    @Override
     public JdbcPluginConfig buildPluginConfig(Builder configBuilder, CredentialsService credentialsService, OptionManager optionManager) {
         return configBuilder.withDialect(this.getDialect()).withDatasourceFactory(this::newDataSource).withDatabase(this.database).withShowOnlyConnDatabase(this.showOnlyConnectionDatabase).withFetchSize(this.fetchSize).withQueryTimeout(this.queryTimeoutSec).build();
     }
@@ -143,7 +133,7 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
         String url = this.toJdbcConnectionString();
 
         try {
-            ConnectionPoolDataSource source = (ConnectionPoolDataSource)Class.forName(POOLED_DATASOURCE).newInstance();
+            ConnectionPoolDataSource source = (ConnectionPoolDataSource)Class.forName("com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource").newInstance();
             MethodUtils.invokeExactMethod(source, "setURL", new Object[]{url});
             if (this.username != null) {
                 MethodUtils.invokeExactMethod(source, "setUser", new Object[]{this.username});
@@ -196,13 +186,12 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
         return urlBuilder.toString();
     }
 
-    protected ArpDialect getArpDialect() {
+    public MyMSSQLDialect getDialect() {
         return MS_ARP_DIALECT;
     }
 
-    public static MyMSSQLConf newMessage() {
-        MyMSSQLConf result = new MyMSSQLConf();
-        result.useLegacyDialect = true;
-        return result;
+    @VisibleForTesting
+    public static MyMSSQLDialect getDialectSingleton() {
+        return MS_ARP_DIALECT;
     }
 }

@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.dalong.jdbc</groupId>
     <artifactId>my-mssql</artifactId>
-    <version>17.0.0-202107060524010627-31b5222b</version>
+    <version>19.0.0-202110270341120595-3e3e05e7</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <version.dremio>15.5.0-202105040508160960-dddd4dca</version.dremio>
-        <version.dremio2>17.0.0-202107060524010627-31b5222b</version.dremio2>
+        <version.dremio2>19.0.0-202110270341120595-3e3e05e7</version.dremio2>
     </properties>
 
 
