@@ -1,5 +1,5 @@
 {
-  "sourceType": "MSSQL",
+  "sourceType": "MYMSSQL",
   "metadataRefresh": {
     "datasetDiscovery": true
   },

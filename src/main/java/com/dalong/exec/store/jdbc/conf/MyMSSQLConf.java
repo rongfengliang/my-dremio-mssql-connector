@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
         externalQuerySupported = true
 )
 public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
-    private static final String ARP_FILENAME = "arp/implementation/mssql-arp.yaml";
+    private static final String ARP_FILENAME = "arp/implementation/my-mssql-arp.yaml";
     private static final MyMSSQLDialect MS_ARP_DIALECT = AbstractArpConf.loadArpFile(ARP_FILENAME, MyMSSQLDialect::new);
     private static final String POOLED_DATASOURCE = "com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource";
     @NotBlank
@@ -133,7 +133,7 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
         String url = this.toJdbcConnectionString();
 
         try {
-            ConnectionPoolDataSource source = (ConnectionPoolDataSource)Class.forName("com.microsoft.sqlserver.jdbc.SQLServerConnectionPoolDataSource").newInstance();
+            ConnectionPoolDataSource source = (ConnectionPoolDataSource)Class.forName(POOLED_DATASOURCE).newInstance();
             MethodUtils.invokeExactMethod(source, "setURL", new Object[]{url});
             if (this.username != null) {
                 MethodUtils.invokeExactMethod(source, "setUser", new Object[]{this.username});

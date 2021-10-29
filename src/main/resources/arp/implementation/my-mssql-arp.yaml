@@ -3,8 +3,8 @@
 #
 
 metadata:
-  name: MSSQL
-  apiname: mssql
+  name: MYMSSQL
+  apiname: mymssql
   spec_version: '1'
 
 syntax:
