@@ -78,9 +78,6 @@
               },
               {
                 "propName": "config.enableExternalQuery"
-              },
-              {
-                "propName": "config.useLegacyDialect"
               }
             ]
           },

@@ -7,8 +7,6 @@ import com.dremio.exec.store.jdbc.DataSources;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig;
 import com.dremio.exec.store.jdbc.JdbcPluginConfig.Builder;
 import com.dremio.exec.store.jdbc.conf.AbstractArpConf;
-import com.dremio.exec.store.jdbc.dialect.arp.ArpDialect;
-import com.dremio.exec.store.jdbc.legacy.JdbcDremioSqlDialect;
 import com.dremio.options.OptionManager;
 import com.dremio.security.CredentialsService;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -82,6 +80,7 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     @DisplayMetadata(
             label = "Enable legacy dialect"
     )
+    @JsonIgnore
     public boolean useLegacyDialect = false;
     @Tag(11)
     @DisplayMetadata(
@@ -126,15 +125,6 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
     @NotMetadataImpacting
     public int queryTimeoutSec = 0;
 
-    public MyMSSQLConf() {
-    }
-
-    @Override
-    public JdbcDremioSqlDialect getDialect() {
-        return MS_ARP_DIALECT;
-    }
-
-    @Override
     public JdbcPluginConfig buildPluginConfig(Builder configBuilder, CredentialsService credentialsService, OptionManager optionManager) {
         return configBuilder.withDialect(this.getDialect()).withDatasourceFactory(this::newDataSource).withDatabase(this.database).withShowOnlyConnDatabase(this.showOnlyConnectionDatabase).withFetchSize(this.fetchSize).withQueryTimeout(this.queryTimeoutSec).build();
     }
@@ -196,13 +186,12 @@ public class MyMSSQLConf extends AbstractArpConf<MyMSSQLConf> {
         return urlBuilder.toString();
     }
 
-    protected ArpDialect getArpDialect() {
+    public MyMSSQLDialect getDialect() {
         return MS_ARP_DIALECT;
     }
 
-    public static MyMSSQLConf newMessage() {
-        MyMSSQLConf result = new MyMSSQLConf();
-        result.useLegacyDialect = true;
-        return result;
+    @VisibleForTesting
+    public static MyMSSQLDialect getDialectSingleton() {
+        return MS_ARP_DIALECT;
     }
 }
