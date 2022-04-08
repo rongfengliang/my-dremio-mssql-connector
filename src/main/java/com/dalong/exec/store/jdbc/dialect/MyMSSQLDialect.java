@@ -154,13 +154,7 @@ public class MyMSSQLDialect extends ArpDialect {
         if (DISABLE_PUSH_COLLATION) {
             return null;
         } else {
-            switch (kind) {
-                case LITERAL:
-                case IDENTIFIER:
-                    return MSSQL_BINARY_COLLATION;
-                default:
-                    return null;
-            }
+            return null;
         }
     }
 
