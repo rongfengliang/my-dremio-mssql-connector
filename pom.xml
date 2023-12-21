@@ -11,7 +11,7 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <version.dremio>15.5.0-202105040508160960-dddd4dca</version.dremio>
-        <version.dremio2>20.0.0-202201050826310141-8cc7162b</version.dremio2>
+        <version.dremio2>24.3.0-202312190021150029-52db2faf</version.dremio2>
     </properties>
 
 

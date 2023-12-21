@@ -10,8 +10,7 @@ metadata:
 syntax:
   identifier_quote: '['
   identifier_length_limit: 128
-  allows_boolean_literal: false
-  map_boolean_literal_to_bit: false
+  map_boolean_to_bit_expr: true
 
 data_types:
   mappings:
@@ -223,7 +222,6 @@ relational_algebra:
   aggregation:
     enable: true
     distinct: true
-    group_by_ordinal: false
     count_functions:
       count_star:
         enable: true
@@ -329,6 +327,9 @@ relational_algebra:
           - args:
               - "float"
             return: "float"
+          - args:
+              - "boolean"
+            return: "boolean"
           - args:
               - "varchar"
             return: "varchar"
@@ -772,6 +773,17 @@ expressions:
             - "double"
           return: "interval_year_month"
     - names:
+        - "last_day"
+      signatures:
+        - args:
+            - "date"
+          return: "date"
+          rewrite: "EOMONTH({0})"
+        - args:
+            - "timestamp"
+          return: "date"
+          rewrite: "EOMONTH({0})"
+    - names:
         - "position"
         - "locate"
       signatures:
@@ -1183,6 +1195,21 @@ expressions:
             - interval_day_second
           rewrite: "DATEPART(ISO_WEEK, {0})"
     - names:
+        - "to_date"
+      signatures:
+        - return: "date"
+          args:
+            - "date"
+          rewrite: "{0}"
+        - return: "date"
+          args:
+            - "timestamp"
+          rewrite: "CAST({0} AS DATE)"
+        - return: "date"
+          args:
+            - "varchar"
+          rewrite: "CAST({0} AS DATE)"
+    - names:
         - "date_trunc_year"
       signatures:
         - return: "timestamp"
@@ -1229,7 +1256,105 @@ expressions:
           args:
             - "timestamp"
           rewrite: "CONVERT(DATETIME, CONVERT(VARCHAR(16), {0}, 120) + '':00'')"
-
+    - names:
+        - date_add
+      signatures:
+        - return: date
+          args:
+            - varchar
+            - integer
+          rewrite: "DATEADD(DAY, {1}, CONVERT(DATE, {0}))"
+        - return: date
+          args:
+            - date
+            - integer
+          rewrite: "DATEADD(DAY, {1}, {0})"
+        - return: date
+          args:
+            - varchar
+            - bigint
+          rewrite: "DATEADD(DAY, {1}, CONVERT(DATE, {0}))"
+        - return: date
+          args:
+            - date
+            - bigint
+          rewrite: "DATEADD(DAY, {1}, {0})"
+        - return: timestamp
+          args:
+            - timestamp
+            - integer
+          rewrite: "DATEADD(DAY, {1}, {0})"
+        - return: timestamp
+          args:
+            - timestamp
+            - bigint
+          rewrite: "DATEADD(DAY, {1}, {0})"
+    - names:
+        - add_months
+      signatures:
+        - return: date
+          args:
+            - varchar
+            - integer
+          rewrite: "DATEADD(MONTH, {1}, CONVERT(DATE, {0}))"
+        - return: date
+          args:
+            - date
+            - integer
+          rewrite: "DATEADD(MONTH, {1}, {0})"
+        - return: date
+          args:
+            - varchar
+            - bigint
+          rewrite: "DATEADD(MONTH, {1}, CONVERT(DATE, {0}))"
+        - return: date
+          args:
+            - date
+            - bigint
+          rewrite: "DATEADD(MONTH, {1}, {0})"
+        - return: timestamp
+          args:
+            - timestamp
+            - integer
+          rewrite: "DATEADD(MONTH, {1}, {0})"
+        - return: timestamp
+          args:
+            - timestamp
+            - bigint
+          rewrite: "DATEADD(MONTH, {1}, {0})"
+    - names:
+        - date_sub
+      signatures:
+        - return: date
+          args:
+            - varchar
+            - integer
+          rewrite: "DATEADD(DAY, -{1}, CONVERT(DATE, {0}))"
+        - return: date
+          args:
+            - date
+            - integer
+          rewrite: "DATEADD(DAY, -{1}, {0})"
+        - return: date
+          args:
+            - varchar
+            - bigint
+          rewrite: "DATEADD(DAY, -{1}, CONVERT(DATE, {0}))"
+        - return: date
+          args:
+            - date
+            - bigint
+          rewrite: "DATEADD(DAY, -{1}, {0})"
+        - return: timestamp
+          args:
+            - timestamp
+            - integer
+          rewrite: "DATEADD(DAY, -{1}, {0})"
+        - return: timestamp
+          args:
+            - timestamp
+            - bigint
+          rewrite: "DATEADD(DAY, -{1}, {0})"
     - names:
         - timestampadd_quarter
       signatures:
@@ -4453,14 +4578,8 @@ expressions:
           return: "varchar"
           rewrite: "LOWER({0})"
     - names:
+        - "length"
         - "char_length"
-      signatures:
-        - args:
-            - "varchar"
-          return: "integer"
-          # SQL Server LEN trims strings, so ensure we count spaces.
-          rewrite: "LEN(REPLACE({0}, '' '', ''_''))"
-    - names:
         - "character_length"
       signatures:
         - args:
