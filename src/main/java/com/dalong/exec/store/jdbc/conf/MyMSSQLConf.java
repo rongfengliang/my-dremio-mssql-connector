@@ -20,7 +20,7 @@ import io.protostuff.Tag;
         previewEngineRequired = true
 )
 public class MyMSSQLConf extends BaseMSSQLConf {
-    private static final String ARP_FILENAME = "arp/implementation/mssql-arp.yaml";
+    private static final String ARP_FILENAME = "arp/implementation/my-mssql-arp.yaml";
     private static final MyMSSQLDialect MS_ARP_DIALECT = (MyMSSQLDialect)AbstractArpConf.loadArpFile(ARP_FILENAME, MyMSSQLDialect::new);
     @Tag(8)
     @DisplayMetadata(

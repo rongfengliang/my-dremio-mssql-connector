@@ -28,7 +28,7 @@ data_types:
         literal_length_limit: 8000
       required_cast_args: "precision"
       dremio:
-        name: "varbinary"
+        name: "varchar"
     - source:
         name: "ntext"
         max_precision: 1073741823
